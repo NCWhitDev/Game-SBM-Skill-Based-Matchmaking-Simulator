@@ -1,7 +1,9 @@
-# Session Matchmaking Simulator
+# Game Matchmaking Simulator
+
+Inspired by games like Overwatch and Valorant matchmaking!!
 
 A simulated matchmaking backend that models how a live multiplayer game
-queues, pairs, and matches players — built with a MySQL schema and a
+queues, pairs, and matches players built with a MySQL schema and a
 Python worker that ticks continuously, pulling waiting players and
 pairing them by skill rating and latency.
 
@@ -25,14 +27,14 @@ This project simulates that system end to end:
 - Matching considers **skill rating**, **latency**, and **wait time**
   (a player who's waited longer gets a wider acceptable skill range,
   so nobody gets stuck in queue forever).
-- Matches are **claimed transactionally** — a match is only ever
+- Matches are **claimed transactionally** a match is only ever
   fully created or not created at all, never left half-written if
   something fails partway through.
 
 The goal wasn't just "make it work," but to intentionally touch
 concurrency-adjacent problems (atomic claims, race conditions,
 data-integrity constraints) even though the worker itself is
-single-threaded — the same reasoning that shows up in real
+single-threaded, the same reasoning that shows up in real
 multiplayer backend systems, without needing a networked game server
 to demonstrate it.
 
@@ -40,7 +42,7 @@ to demonstrate it.
 
 | Tool | Purpose | Why this choice |
 
-**MySQL** Stores players, queue tickets, matches, and match rosters | Relational structure fits this domain well — players, queue entries, and matches all reference each other, and foreign keys + constraints let the *database itself* enforce rules (like "a player can't be queued twice at once") rather than relying on application code to remember to check.
+**MySQL** Stores players, queue tickets, matches, and match rosters | Relational structure fits this domain well , players, queue entries, and matches all reference each other, and foreign keys + constraints let the *database itself* enforce rules (like "a player can't be queued twice at once") rather than relying on application code to remember to check.
 
 **MySQL Workbench** Writing/running schema and seed SQL, inspecting tables visually | Easier to review multi-statement scripts and catch syntax errors before running, versus typing line-by-line in a shell.
 
@@ -62,7 +64,7 @@ to demonstrate it.
    ```
    DB_PASSWORD=your_mysql_root_password
    ```
-   (Never commit this file — it should be listed in `.gitignore`.)
+   (Never commit this file it should be listed in `.gitignore`.)
 3. Install Python dependencies:
    ```
    pip install mysql-connector-python python-dotenv rich
@@ -83,7 +85,7 @@ widening for players who've been queued a while), and claims any
 successful pairs transactionally. Live matches print as colored
 panels; unmatched players print as dimmed status lines.
 
-Press **Ctrl+C** to stop — the worker shuts down gracefully and closes
+Press **Ctrl+C** to stop the worker shuts down gracefully and closes
 its database connection rather than crashing mid-transaction.
 
 ### Resetting for a demo
@@ -98,23 +100,23 @@ python reset_demo.py
 
 This wipes `match_players`, `matches`, and `queue_entries` (in that
 order, to respect foreign key constraints) and re-queues all existing
-players — it does **not** touch or duplicate the `players` table
+players it does **not** touch or duplicate the `players` table
 itself.
 
 ### Things worth testing / observing
 
 - **Skill + latency filtering**: seed two players with a small skill
-  gap but a large latency gap — they should *not* match, proving the
+  gap but a large latency gap they should *not* match, proving the
   latency filter is a real hard constraint, not just a tiebreaker.
 - **Wait-time widening**: a player who's waited long enough should
   eventually match a much higher/lower-skill opponent than the base
   threshold would normally allow.
 - **Duplicate-queue protection**: try inserting a second `waiting`
-  row for a player who already has one — MySQL should reject it via
+  row for a player who already has one MySQL should reject it via
   the `idx_unique_waiting_player` constraint.
 - **Transactional safety**: if a claim fails partway (e.g., a
   duplicate `match_players` entry), the whole match should roll back
-  — no partial match should ever persist in the database.
+  no partial match should ever persist in the database.
 
 ### Known limitation
 
@@ -124,6 +126,6 @@ than searching for the *best possible* set of pairings. In practice
 this means two players with a very close skill match can sometimes
 end up separated because one of them got claimed by a "good enough"
 match first. This was an intentional simplification for the scope of
-this project, and a legitimate real-world tradeoff — a smarter (but
+this project, and a legitimate real-world tradeoff a smarter (but
 slower) matching strategy would need to compare all possible pairings
 before committing to any of them.

@@ -1,4 +1,4 @@
-# Game Matchmaking Simulator
+# Game SBM(Skill Based Matchmaking) Simulator
 
 Inspired by games like Overwatch and Valorant matchmaking!!
 

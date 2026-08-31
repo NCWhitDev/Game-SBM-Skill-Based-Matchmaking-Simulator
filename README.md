@@ -102,21 +102,6 @@ order, to respect foreign key constraints) and re-queues all existing
 players it does **not** touch or duplicate the `players` table
 itself.
 
-### Things worth testing / observing
-
-- **Skill + latency filtering**: seed two players with a small skill
-  gap but a large latency gap they should *not* match, proving the
-  latency filter is a real hard constraint, not just a tiebreaker.
-- **Wait-time widening**: a player who's waited long enough should
-  eventually match a much higher/lower-skill opponent than the base
-  threshold would normally allow.
-- **Duplicate-queue protection**: try inserting a second `waiting`
-  row for a player who already has one MySQL should reject it via
-  the `idx_unique_waiting_player` constraint.
-- **Transactional safety**: if a claim fails partway (e.g., a
-  duplicate `match_players` entry), the whole match should roll back
-  no partial match should ever persist in the database.
-
 ### Known limitation
 
 The pairing algorithm is **greedy**, not globally optimal: it sorts
@@ -131,3 +116,5 @@ before committing to any of them.
 
 <img width="877" height="907" alt="image" src="https://github.com/user-attachments/assets/7e9778eb-c7c0-4813-87a0-fe33e1d88d20" />
 
+
+Developed by N Connor Whitaker

@@ -1,4 +1,4 @@
-# Session Matchmaking Simulator
+# Game Matchmaking Simulator
 
 Inspired by games like Overwatch and Valorant matchmaking!!
 

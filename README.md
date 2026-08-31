@@ -129,3 +129,6 @@ match first. This was an intentional simplification for the scope of
 this project, and a legitimate real-world tradeoff a smarter (but
 slower) matching strategy would need to compare all possible pairings
 before committing to any of them.
+
+<img width="877" height="907" alt="image" src="https://github.com/user-attachments/assets/7e9778eb-c7c0-4813-87a0-fe33e1d88d20" />
+

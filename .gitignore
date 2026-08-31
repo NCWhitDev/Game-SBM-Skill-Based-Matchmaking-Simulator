@@ -1,0 +1,25 @@
+# ===== Secrets =====
+.env
+*.env
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# ===== Editor / IDE =====
+.vscode/
+.idea/
+*.swp
+
+# ===== OS clutter =====
+.DS_Store
+Thumbs.db
+desktop.ini

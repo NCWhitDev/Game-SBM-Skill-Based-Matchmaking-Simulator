@@ -64,7 +64,6 @@ to demonstrate it.
    ```
    DB_PASSWORD=your_mysql_root_password
    ```
-   (Never commit this file it should be listed in `.gitignore`.)
 3. Install Python dependencies:
    ```
    pip install mysql-connector-python python-dotenv rich

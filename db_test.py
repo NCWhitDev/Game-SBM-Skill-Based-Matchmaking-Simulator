@@ -24,10 +24,10 @@ def get_connection(): # Establishes a connection to the MySQL database using cre
 Fetches all players currently in the queue with a status of 'waiting'.
 """
 def fetch_waiting_players(conn): # Fetches all players currently in the queue with a status of 'waiting'.
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(dictionary=True) # Create a cursor that returns rows as dictionaries for easier access to column values by name
     cursor.execute("""
         SELECT q.ID AS queue_id, p.ID AS player_id, p.Player_Name, p.skill_rating, q.latency_ms,
-            TIMESTAMPDIFF(SECOND, q.queued_at, NOW()) AS wait_seconds
+        TIMESTAMPDIFF(SECOND, q.queued_at, NOW()) AS wait_seconds
         FROM queue_entries q
         JOIN players p ON q.Player_ID = p.ID
         WHERE q.status = 'waiting';
@@ -49,13 +49,13 @@ def find_matches(candidates, max_skill_diff=600, max_latency_diff=50):
     while candidates:
         player = candidates.pop(0)
         matched = False
-        for other in candidates:
+        for other in candidates: # Iterate through the remaining candidates to find a suitable match for the current player.
             player_threshold = effective_skill_diff(max_skill_diff, player['wait_seconds'])
             other_threshold = effective_skill_diff(max_skill_diff, other['wait_seconds'])
-            combined_threshold = max(player_threshold, other_threshold)
+            combined_threshold = max(player_threshold, other_threshold) # Calculate the effective skill difference threshold for matching based on both players' wait times.
 
             if (abs(player['skill_rating'] - other['skill_rating']) <= combined_threshold) and \
-               (abs(player['latency_ms'] - other['latency_ms']) <= max_latency_diff):
+               (abs(player['latency_ms'] - other['latency_ms']) <= max_latency_diff): # Check if the skill rating difference and latency difference between the two players are within the allowed thresholds.
                 matches.append((player, other))
                 candidates.remove(other)
                 matched = True
@@ -71,16 +71,19 @@ Updates the database to mark two players as matched.
 def claim_match(conn, player1_id, player2_id):  # Updates the database to mark two players as matched.
     cursor = conn.cursor()
     try:
+        # Start a transaction to ensure atomicity of the match claiming process
         cursor.execute("""
                 INSERT INTO matches (match_status, match_start_time)
                 VALUES (%s, NOW())""", ('in_progress',))
         match_id = cursor.lastrowid  # Get the ID of the newly created match
 
+        # Insert both players into the match_players table with their respective team sides (0 and 1)
         cursor.execute("""
                        INSERT INTO match_players (Match_ID, Player_ID, team_side)
                           VALUES (%s, %s, %s), (%s, %s, %s)""",
                        (match_id, player1_id, 0, match_id, player2_id, 1))
 
+        # Update the queue_entries table to mark both players as 'matched' in the queue
         cursor.execute("""
                           UPDATE queue_entries
                               SET status = 'matched'
@@ -96,10 +99,12 @@ def claim_match(conn, player1_id, player2_id):  # Updates the database to mark t
 
 
 """
+Skill Gap issue, Long que times fix: The effective skill difference allowed increases based on how long a player has been waiting in the queue. 
+This is calculated by adding a time-based modifier to the base skill difference threshold, allowing for more flexibility in matching players who have been waiting longer.
 Calculates the effective skill difference allowed based on how long a player has been waiting.
 """
-def effective_skill_diff(base_diff, wait_seconds, max_diff=1500):  # Calculates the effective skill difference allowed based on how long a player has been waiting.
-    time_modifier = wait_seconds // 60
+def effective_skill_diff(base_diff, wait_seconds, max_diff=1500):
+    time_modifier = wait_seconds // 60 # Increases the effective skill difference allowed based on how long a player has been waiting.
     widened = base_diff + time_modifier * 50
     return min(widened, max_diff)  # Increases the effective skill difference allowed based on how long a player has been waiting.
 
@@ -117,20 +122,24 @@ def finished_match(conn, match_duration_seconds=20):  # Updates the database to 
     finished = cursor.fetchall() # Fetch all matches that have been in progress for longer than the specified duration
     cursor.close()
 
+    # If there are any finished matches, update their status to 'completed' and return the players to the queue.
     for match in finished:
         match_id = match['ID']
         cursor = conn.cursor(dictionary=True)
         try:
+             # Fetch all players in the finished match
             cursor.execute("""
                 SELECT Player_ID FROM match_players WHERE Match_ID = %s
             """, (match_id,))
-            players_in_match = cursor.fetchall() # Fetch all players in the finished match
+            players_in_match = cursor.fetchall()
 
+            # Update the match status to 'completed' and set the match end time to now: Match is marked as completed in the database, and the end time is recorded.
             cursor.execute("""
                 UPDATE matches SET match_status = 'completed', match_end_time = NOW()
                 WHERE ID = %s
             """, (match_id,))
 
+            # Return players to the queue with a status of 'waiting' and a random latency between 10 and 100 ms: Each player from the finished match is reinserted into the queue with a waiting status and a randomly generated latency value.
             for row in players_in_match: # Loop through each player in the finished match
                 cursor.execute("""
                     INSERT INTO queue_entries (Player_ID, status, latency_ms)
@@ -138,7 +147,7 @@ def finished_match(conn, match_duration_seconds=20):  # Updates the database to 
                 """, (row['Player_ID'],))
 
             conn.commit() # Commit the transaction to save changes to the database
-            console.print(f"[yellow]Match #{match_id} ended — both players back in queue.[/yellow]")
+            console.print(f"[yellow]Match #{match_id} ended. Both players back in queue.[/yellow]")
         except mysql.connector.Error as err:
             conn.rollback() # Rollback the transaction in case of an error
             print(f"Failed to close out match {match_id}, rolled back: {err}")
@@ -150,6 +159,7 @@ def finished_match(conn, match_duration_seconds=20):  # Updates the database to 
 
 """
 Displays a match between two players in a formatted panel using the Rich library.
+Needed to display the match information in a visually appealing way in the console, making it easier to read and understand the match details.
 """
 def display_match(p1, p2, match_id):
     text = (

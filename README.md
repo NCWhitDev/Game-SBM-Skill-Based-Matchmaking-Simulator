@@ -1,5 +1,7 @@
 # Session Matchmaking Simulator
 
+Inspired by games like Overwatch and Valorant matchmaking!!
+
 A simulated matchmaking backend that models how a live multiplayer game
 queues, pairs, and matches players built with a MySQL schema and a
 Python worker that ticks continuously, pulling waiting players and
